@@ -9,6 +9,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.PropertiesDefaultProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,16 +27,21 @@ import static org.apache.commons.io.FilenameUtils.removeExtension;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 // Font Name: Basic
-@Command(name = "notes", mixinStandardHelpOptions = true, version = "notes 0.1", description = "notes made with jbang", header = {
-        "",
-        "d8b   db  .d88b.  d888888b d88888b .d8888.",
-        "888o  88 .8P  Y8. `~~88~~' 88'     88'  YP",
-        "88V8o 88 88    88    88    88ooooo `8bo.",
-        "88 V8o88 88    88    88    88~~~~~   `Y8b.",
-        "88  V888 `8b  d8'    88    88.     db   8D",
-        "VP   V8P  `Y88P'     YP    Y88888P `8888Y'",
-        ""
-})
+@Command(name = "notes",
+        mixinStandardHelpOptions = true,
+        version = "notes 0.1",
+        description = "notes made with jbang",
+        defaultValueProvider = PropertiesDefaultProvider.class,
+        header = {
+                "",
+                "d8b   db  .d88b.  d888888b d88888b .d8888.",
+                "888o  88 .8P  Y8. `~~88~~' 88'     88'  YP",
+                "88V8o 88 88    88    88    88ooooo `8bo.",
+                "88 V8o88 88    88    88    88~~~~~   `Y8b.",
+                "88  V888 `8b  d8'    88    88.     db   8D",
+                "VP   V8P  `Y88P'     YP    Y88888P `8888Y'",
+                ""
+        })
 class notes implements Callable<Integer> {
 
     private static List<String> HEADER = List.of(
@@ -56,8 +62,7 @@ class notes implements Callable<Integer> {
     @Option(names = {"-w", "--workspace"},
             required = true,
             paramLabel = "WORKSPACE",
-            defaultValue = "${env:NOTES_WORKSPACE}",
-            description = "The workspace dir. Defaults to 'env:NOTES_WORKSPACE'")
+            description = "The workspace dir. Defaults to `workspace` property on '${sys:user.home}${sys:file.separator}notes.properties'")
     private File workspace;
 
     @Parameters(index = "*", description = "The issue title")
@@ -94,8 +99,8 @@ class notes implements Callable<Integer> {
     private String buildSuffix() {
         return Optional.ofNullable(suffixes)
                 .map(s -> s.stream()
-                                .map(suffix1 -> suffix1.trim().toUpperCase())
-                                .collect(Collectors.joining("-")))
+                        .map(suffix1 -> suffix1.trim().toUpperCase())
+                        .collect(Collectors.joining("-")))
                 .orElse(null);
     }
 
