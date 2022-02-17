@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.lang.System.*;
@@ -59,8 +60,8 @@ class notes implements Callable<Integer> {
             description = "The workspace dir. Defaults to 'env:NOTES_WORKSPACE'")
     private File workspace;
 
-    @Parameters(index = "0", arity = "0..1", description = "The suffix")
-    private String suffix;
+    @Parameters(index = "*", description = "The issue title")
+    private List<String> suffixes;
 
     @Option(names = {"-e", "--editor"},
             required = true,
@@ -76,9 +77,10 @@ class notes implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        printHeader();
+        String suffix = buildSuffix();
+        printHeader(suffix);
         try {
-            File notesFile = buildNoteFile();
+            File notesFile = buildNoteFile(suffix);
             if (!notesFile.exists()) {
                 writeStringToFile(notesFile, format("# %s", removeExtension(notesFile.getName())), CHARSET);
             }
@@ -89,7 +91,15 @@ class notes implements Callable<Integer> {
         return 0;
     }
 
-    private void printHeader() {
+    private String buildSuffix() {
+        return Optional.ofNullable(suffixes)
+                .map(s -> s.stream()
+                                .map(suffix1 -> suffix1.trim().toUpperCase())
+                                .collect(Collectors.joining("-")))
+                .orElse(null);
+    }
+
+    private void printHeader(String suffix) {
         out.println(String.join(lineSeparator(), HEADER));
         out.println("--- ----------------------------------------------------------------------------");
         out.println("Input parameters:");
@@ -101,16 +111,16 @@ class notes implements Callable<Integer> {
         out.println("");
     }
 
-    private File buildNoteFile() {
+    private File buildNoteFile(String suffix) {
         LocalDateTime today = LocalDateTime.now();
         String monthFolder = today.format(DateTimeFormatter.ofPattern(MONTH_FOLDER_FORMAT));
-        String fileName = buildFileName(today);
+        String fileName = buildFileName(today, suffix);
         return FileUtils.getFile(workspace, monthFolder, format("%s.md", fileName));
     }
 
-    private String buildFileName(LocalDateTime today) {
+    private String buildFileName(LocalDateTime today, Object suffix) {
         return Optional.ofNullable(suffix)
-                .map(s -> format("%s-%s", today.format(DateTimeFormatter.ofPattern(FILE_WITH_SUFFIX_NAME_FORMAT)), s.trim().toUpperCase()))
+                .map(s -> format("%s-%s", today.format(DateTimeFormatter.ofPattern(FILE_WITH_SUFFIX_NAME_FORMAT)), suffix))
                 .orElseGet(() -> today.format(DateTimeFormatter.ofPattern(FILE_NAME_FORMAt)));
     }
 
