@@ -1,0 +1,9 @@
+{
+    "catalogs": {},
+    "aliases": {
+      "notes": {
+        "script-ref": "notes.java"
+      }
+    },
+    "templates": {}
+  }
