@@ -1,15 +1,13 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.5.0
 
-
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 import java.util.concurrent.Callable;
 
-@Command(name = "notes", mixinStandardHelpOptions = true, version = "notes 0.1",
-        description = "notes made with jbang")
+@Command(name = "notes", mixinStandardHelpOptions = true, version = "notes 0.1", description = "notes made with jbang")
 class notes implements Callable<Integer> {
 
     @Parameters(index = "0", description = "The greeting to print", defaultValue = "World!")
