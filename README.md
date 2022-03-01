@@ -36,7 +36,7 @@ Create a `.notes.properties` file on your `home` directory to set the default va
 
 > Here's an example of the file content for setting the `workspace` config in `Windows` OS:
 
-    workspace  = C:\\Users\\garodriguezlp\\notes-workspace
+    workspace = C:\\Users\\garodriguezlp\\notes-workspace
 
 ## Why notes?
 
