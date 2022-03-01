@@ -32,9 +32,9 @@ VP   V8P  `Y88P'     YP    Y88888P `8888Y'
     ```
 ## Configuration
 
-Create a `.notes.properties` file on your `home` directory to set the default value of the `notes` `WORKSPACE` directory. 
-    
-    > Here's an example of setting the `workspace` config in `Windows` OS
+Create a `.notes.properties` file on your `home` directory to set the default value of the `notes` `WORKSPACE` directory.
+
+> Here's an example of the file content for setting the `workspace` config in `Windows` OS:
 
     workspace  = C:\\Users\\garodriguezlp\\notes-workspace
 

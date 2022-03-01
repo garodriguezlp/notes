@@ -62,7 +62,7 @@ class notes implements Callable<Integer> {
     @Option(names = {"-w", "--workspace"},
             required = true,
             paramLabel = "WORKSPACE",
-            description = "The workspace dir. Defaults to `workspace` property on '${sys:user.home}${sys:file.separator}notes.properties'")
+            description = "The workspace dir. Defaults to `workspace` property on '${sys:user.home}${sys:file.separator}.notes.properties'")
     private File workspace;
 
     @Parameters(index = "*", description = "The issue title")
