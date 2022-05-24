@@ -71,9 +71,30 @@ class notes implements Callable<Integer> {
     @Option(names = {"-e", "--editor"},
             required = true,
             paramLabel = "EDITOR",
-            defaultValue = "code",
-            description = "The text code editor")
-    private String editor;
+            defaultValue = "${notes.editor:-code}",
+            description = "The text code editor. Defaults to `${notes.editor:-code}`")
+    private String notesEditor;
+
+    @Option(names = {"-x", "--extension"},
+            required = true,
+            paramLabel = "EXTENSION",
+            defaultValue = "${notes.extension:-md}",
+            description = "The notes file extension. Defaults to `${notes.extension:-md}`")
+    public String extension;
+
+    @Option(names = {"-s", "--skip-header"},
+            required = true,
+            paramLabel = "SKIP HEADER",
+            defaultValue = "${notes.skipHeader:-false}",
+            description = "Skip the file header generation. Defaults to `${notes.skipHeader:-false}`")
+    public boolean skipHeader;
+
+    @Option(names = {"-c", "--comment-chars-sequence"},
+            required = true,
+            paramLabel = "COMMENT_CHARS_SEQUENCE",
+            defaultValue = "${notes.commentSequence:-#}",
+            description = "The char sequence to use for comments. Defaults to `${notes.commentSequence:-#}`")
+    public String commentSequence = "#";
 
     public static void main(String... args) {
         int exitCode = new CommandLine(new notes()).execute(args);
@@ -86,9 +107,7 @@ class notes implements Callable<Integer> {
         printHeader(suffix);
         try {
             File notesFile = buildNoteFile(suffix);
-            if (!notesFile.exists()) {
-                writeStringToFile(notesFile, format("# %s", removeExtension(notesFile.getName())), CHARSET);
-            }
+            writeDefaultHeader(notesFile);
             openEditor(notesFile.getAbsolutePath());
         } catch (Exception ex) {
             err.printf("ERROR: %s%n", ex.getMessage());
@@ -120,7 +139,7 @@ class notes implements Callable<Integer> {
         LocalDateTime today = LocalDateTime.now();
         String monthFolder = today.format(DateTimeFormatter.ofPattern(MONTH_FOLDER_FORMAT));
         String fileName = buildFileName(today, suffix);
-        return FileUtils.getFile(workspace, monthFolder, format("%s.md", fileName));
+        return FileUtils.getFile(workspace, monthFolder, format("%s.%s", fileName, extension));
     }
 
     private String buildFileName(LocalDateTime today, Object suffix) {
@@ -129,12 +148,18 @@ class notes implements Callable<Integer> {
                 .orElseGet(() -> today.format(DateTimeFormatter.ofPattern(FILE_NAME_FORMAt)));
     }
 
+    private void writeDefaultHeader(File notesFile) throws IOException {
+        if (!notesFile.exists() && !skipHeader) {
+            writeStringToFile(notesFile, format("%s %s", commentSequence, removeExtension(notesFile.getName())), CHARSET);
+        }
+    }
+
     private void openEditor(final String notesFile) throws IOException {
         String[] cmd;
         if (SystemUtils.IS_OS_UNIX) {
-            cmd = new String[]{"sh", "-c", editor, notesFile};
+            cmd = new String[]{"sh", "-c", notesEditor, notesFile};
         } else {
-            cmd = new String[]{"cmd", "/c", editor, notesFile};
+            cmd = new String[]{"cmd", "/c", notesEditor, notesFile};
         }
         out.println("Running `" + String.join(" ", cmd) + "`");
         new ProcessBuilder(cmd).start();
