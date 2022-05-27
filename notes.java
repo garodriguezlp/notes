@@ -13,7 +13,10 @@ import picocli.CommandLine.PropertiesDefaultProvider;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +24,11 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static java.lang.System.*;
+import static java.lang.System.err;
+import static java.lang.System.exit;
+import static java.lang.System.lineSeparator;
+import static java.lang.System.out;
+import static java.time.Clock.systemDefaultZone;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
@@ -55,13 +62,16 @@ class notes implements Callable<Integer> {
             "");
 
     private static final String CHARSET = "UTF-8";
-    private static final String FILE_NAME_FORMAt = "yy.MM.dd";
+    private static final String FILE_NAME_FORMAT = "yy.MM.dd";
     private static final String FILE_WITH_SUFFIX_NAME_FORMAT = "yyyy.MM.dd'T'HH.mm";
     private static final String MONTH_FOLDER_FORMAT = "yyyy.MM";
+
+    private final Clock clock;
 
     @Option(names = {"-w", "--workspace"},
             required = true,
             paramLabel = "WORKSPACE",
+            defaultValue = "${notes.workspace}",
             description = "The workspace dir. Defaults to `workspace` property on '${sys:user.home}${sys:file.separator}.notes.properties'")
     private File workspace;
 
@@ -94,10 +104,21 @@ class notes implements Callable<Integer> {
             paramLabel = "COMMENT_CHARS_SEQUENCE",
             defaultValue = "${notes.commentSequence:-#}",
             description = "The char sequence to use for comments. Defaults to `${notes.commentSequence:-#}`")
-    public String commentSequence = "#";
+    public String commentSequence;
+
+    @Option(names = {"-o", "--open-editor"},
+            required = true,
+            paramLabel = "OPEN_EDITOR",
+            defaultValue = "${notes.openEditor:-true}",
+            description = "Whether or not to open the text editor. Defaults to `${notes.openEditor:-#}`")
+    public boolean openEditor;
+
+    public notes(Clock clock) {
+        this.clock = clock;
+    }
 
     public static void main(String... args) {
-        int exitCode = new CommandLine(new notes()).execute(args);
+        int exitCode = new CommandLine(new notes(systemDefaultZone())).execute(args);
         exit(exitCode);
     }
 
@@ -136,7 +157,7 @@ class notes implements Callable<Integer> {
     }
 
     private File buildNoteFile(String suffix) {
-        LocalDateTime today = LocalDateTime.now();
+        LocalDateTime today = LocalDateTime.now(clock);
         String monthFolder = today.format(DateTimeFormatter.ofPattern(MONTH_FOLDER_FORMAT));
         String fileName = buildFileName(today, suffix);
         return FileUtils.getFile(workspace, monthFolder, format("%s.%s", fileName, extension));
@@ -145,7 +166,7 @@ class notes implements Callable<Integer> {
     private String buildFileName(LocalDateTime today, Object suffix) {
         return Optional.ofNullable(suffix)
                 .map(s -> format("%s-%s", today.format(DateTimeFormatter.ofPattern(FILE_WITH_SUFFIX_NAME_FORMAT)), suffix))
-                .orElseGet(() -> today.format(DateTimeFormatter.ofPattern(FILE_NAME_FORMAt)));
+                .orElseGet(() -> today.format(DateTimeFormatter.ofPattern(FILE_NAME_FORMAT)));
     }
 
     private void writeDefaultHeader(File notesFile) throws IOException {
@@ -162,6 +183,10 @@ class notes implements Callable<Integer> {
             cmd = new String[]{"cmd", "/c", notesEditor, notesFile};
         }
         out.println("Running `" + String.join(" ", cmd) + "`");
-        new ProcessBuilder(cmd).start();
+        if (openEditor) {
+            new ProcessBuilder(cmd).start();
+        } else {
+            out.println("--open-editor is set as `false`, therefore no editor was open");
+        }
     }
 }
