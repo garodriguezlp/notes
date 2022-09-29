@@ -1,4 +1,5 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
+//JAVA 11
 //DEPS info.picocli:picocli:4.6.3
 //DEPS org.apache.commons:commons-lang3:3.12.0
 //DEPS commons-io:commons-io:2.11.0
