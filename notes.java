@@ -15,21 +15,16 @@ import picocli.CommandLine.PropertiesDefaultProvider;
 import java.io.File;
 import java.io.IOException;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static java.lang.System.err;
-import static java.lang.System.exit;
-import static java.lang.System.lineSeparator;
-import static java.lang.System.out;
+import static java.lang.System.*;
 import static java.time.Clock.systemDefaultZone;
+import static java.util.stream.Collectors.joining;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
@@ -141,7 +136,7 @@ class notes implements Callable<Integer> {
         return Optional.ofNullable(suffixes)
                 .map(s -> s.stream()
                         .map(suffix1 -> suffix1.trim().toUpperCase())
-                        .collect(Collectors.joining("-")))
+                        .collect(joining("-")))
                 .orElse(null);
     }
 
@@ -177,13 +172,15 @@ class notes implements Callable<Integer> {
     }
 
     private void openEditor(final String notesFile) throws IOException {
-        String[] cmd;
-        if (SystemUtils.IS_OS_UNIX) {
-            cmd = new String[]{"sh", "-c", notesEditor, notesFile};
-        } else {
-            cmd = new String[]{"cmd", "/c", notesEditor, notesFile};
-        }
+        String filePath = notesFile.contains(" ") ? format("\"%s\"", notesFile) : notesFile;
+        String editorCmd = String.join(" ", notesEditor, filePath);
+
+        List<String> cmd = SystemUtils.IS_OS_UNIX ?
+                List.of("sh", "-c", editorCmd) :
+                List.of("cmd", "/c", editorCmd);
+
         out.println("Running `" + String.join(" ", cmd) + "`");
+
         if (openEditor) {
             new ProcessBuilder(cmd).start();
         } else {
